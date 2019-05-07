@@ -1,6 +1,6 @@
 const shim = require('fabric-shim');
 const util = require('util');
-const ethGSV = require('ethereum-gen-sign-verify');
+const EthCrypto = require('eth-crypto');
 
 var Chaincode = class {
 
@@ -145,7 +145,7 @@ var Chaincode = class {
     let mspid = stub.getCreator().mspid;
     let sp = (await stub.getState(`sp_${mspid}`)).toString()
     let msg = JSON.parse(args[1])
-    let signature = JSON.parse(args[2])
+    let signature = args[2]
 
     if(!user) {
       throw new Error('User not found');
@@ -157,9 +157,13 @@ var Chaincode = class {
 
     if(sp) {
       user = JSON.parse(user)
-      let isValid = ethGSV.verify(JSON.stringify(msg), signature, user.publicKey);
 
-      if(isValid) {
+      const signer = EthCrypto.recover(
+          signature,
+          EthCrypto.hash.keccak256(JSON.stringify(msg))
+      );
+
+      if(signer === user.publicKey) {
         sp = JSON.parse(sp);
         stub.setEvent('grantAccess', Buffer.from(JSON.stringify({"publicKey": sp.publicKey, "mspid": mspid})))
       } else {
