@@ -54,10 +54,14 @@ var Chaincode = class {
 
     let user = {publicKey, metaDataHash}
 
-    if(!(await stub.getState(`user_${id}`)).toString()) {
-      await stub.putState(`user_${id}`, Buffer.from(JSON.stringify(user)))
+    if((await stub.getState('identityAuthority')).toString() === stub.getCreator().mspid) {
+      if(!(await stub.getState(`user_${id}`)).toString()) {
+        await stub.putState(`user_${id}`, Buffer.from(JSON.stringify(user)))
+      } else {
+        throw new Error('ID already exists');
+      }
     } else {
-      throw new Error('ID already exists');
+      throw new Error('You don\'t have permission to update hash');
     }
   }
 
@@ -142,8 +146,6 @@ var Chaincode = class {
     let sp = (await stub.getState(`sp_${mspid}`)).toString()
     let msg = JSON.parse(args[1])
     let signature = JSON.parse(args[2])
-
-    
 
     if(!user) {
       throw new Error('User not found');
