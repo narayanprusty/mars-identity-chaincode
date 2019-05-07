@@ -1,10 +1,14 @@
 # mars-identity-chaincode
 
-This chaincode allows identity authority to assign public key based unique ID to every person in mars. Every person is provided with an ID-card and the chip on the card carries the private key. Using the ID-card people can proof their identity in an electronic environment.
+This chaincode is used to assign unique identity every person in mars. This chaincode will be deploy on the "identity" channel by the identity authority.
 
-> The design process of the ID-card and scanning device is out of scope of the PoC. ID-card based identity solutions are already invented so it's not challenging to achieve this.
+## Install and Instantiate 
 
-The meta data of identity owner such as name, age, DOB, address, mobile number and so on will be encrypted and stored in a proxy re-encryption server. 
+First ssh into the EC2 that's running the containers. Then access to shell of containers using this command: `docker exec -i -t container_id /bin/bash`. 
 
-Every person will be assigned a unique PRE (proxy re-encryption) private key using which the meta data of the person will be encrypted and stored in PRE server. The private key stored in the ID-card is used to proof ownership and grant/revoke data access to other governments/enterprises in the blockchain network. The PRE private key is stored with identity authority.   
+Then follow this steps to install and instantiate the chaincode:
+
+1. We need to install the chaincode in all three authorities containers. For all authorities, clone the chaincode repo using the command `git clone https://github.com/narayanprusty/mars-identity-chaincode.git`
+2. Then for all authorities install using this command: `peer chaincode install -p /home/mars-identity-chaincode -n identity -v 0 -l node`
+3. Then in identity authority container run the following command to instantiate the chaincode: `peer chaincode instantiate -n identity -v 0 -c '{"Args":[]}' -C identity`
 
