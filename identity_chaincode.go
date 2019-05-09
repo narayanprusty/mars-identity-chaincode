@@ -95,16 +95,15 @@ func (t *IdentityChaincode) issueIdentity(stub shim.ChaincodeStubInterface, args
 		return shim.Error("Incorrect number of arguments.")
 	}
 
-	var identity, identityAuthority, newUserJson []byte
 	var err error
 
-	identityAuthority, err = stub.GetState("identityAuthority")
+	identityAuthority, err := stub.GetState("identityAuthority")
 
 	if err != nil {
 		return shim.Error("An error occured")
 	}
 
-	identity, err = stub.GetCreator()
+	identity, err := stub.GetCreator()
 
 	if err != nil {
 		return shim.Error("An error occured")
@@ -123,17 +122,23 @@ func (t *IdentityChaincode) issueIdentity(stub shim.ChaincodeStubInterface, args
 		return shim.Error("You are not authorized")
 	}
 
+	userExists, err := stub.GetState("user_" + args[0])
+
+	if userExists != nil  {
+		return shim.Error("User already exists")
+	}
+
 	var newUser User
 	newUser.PublicKey = args[1]
 	newUser.MetadataHash = args[2]
 
-	newUserJson, err = json.Marshal(newUser)
+	newUserJson, err := json.Marshal(newUser)
 
 	if err != nil {
 			return shim.Error("An error occured")
 	}
 
-	err = stub.PutState("user_" + args[0], []byte(string(newUserJson)))
+	err = stub.PutState("user_" + args[0], newUserJson)
 
 	if err != nil {
 		return shim.Error("An error occured")
@@ -153,7 +158,7 @@ func (t *IdentityChaincode) getIdentity(stub shim.ChaincodeStubInterface, args [
 		return shim.Error("An error occured")
 	}
 
-	return shim.Success([]byte(user))
+	return shim.Success(user)
 }
 
 func (t *IdentityChaincode) updateUserMetadataHash(stub shim.ChaincodeStubInterface, args []string) pb.Response {
@@ -161,16 +166,15 @@ func (t *IdentityChaincode) updateUserMetadataHash(stub shim.ChaincodeStubInterf
 		return shim.Error("Incorrect number of arguments.")
 	}
 
-	var identity, identityAuthority []byte
 	var err error
 
-	identityAuthority, err = stub.GetState("identityAuthority")
+	identityAuthority, err := stub.GetState("identityAuthority")
 
 	if err != nil {
 		return shim.Error("An error occured")
 	}
 
-	identity, err = stub.GetCreator()
+	identity, err := stub.GetCreator()
 
 	if err != nil {
 		return shim.Error("An error occured")
@@ -202,7 +206,7 @@ func (t *IdentityChaincode) updateUserMetadataHash(stub shim.ChaincodeStubInterf
 
 	userJson, err := json.Marshal(userStruct)
 
-	err = stub.PutState("user_" + args[0], []byte(string(userJson)))
+	err = stub.PutState("user_" + args[0], userJson)
 
 	if err != nil {
 		return shim.Error("An error occured")
@@ -216,16 +220,15 @@ func (t *IdentityChaincode) addServiceProvider(stub shim.ChaincodeStubInterface,
 		return shim.Error("Incorrect number of arguments.")
 	}
 
-	var identity, identityAuthority, newSPJson []byte
 	var err error
 
-	identityAuthority, err = stub.GetState("identityAuthority")
+	identityAuthority, err := stub.GetState("identityAuthority")
 
 	if err != nil {
 		return shim.Error("An error occured")
 	}
 
-	identity, err = stub.GetCreator()
+	identity, err := stub.GetCreator()
 
 	if err != nil {
 		return shim.Error("An error occured")
@@ -248,13 +251,13 @@ func (t *IdentityChaincode) addServiceProvider(stub shim.ChaincodeStubInterface,
 	newSP.Name = args[1]
 	newSP.PublicKey = args[2]
 
-	newSPJson, err = json.Marshal(newSP)
+	newSPJson, err := json.Marshal(newSP)
 
 	if err != nil {
 			return shim.Error("An error occured")
 	}
 
-	err = stub.PutState("sp_" + args[0], []byte(string(newSPJson)))
+	err = stub.PutState("sp_" + args[0], newSPJson)
 
 	if err != nil {
 		return shim.Error("An error occured")
@@ -274,7 +277,7 @@ func (t *IdentityChaincode) getServiceProvider(stub shim.ChaincodeStubInterface,
 		return shim.Error("An error occured")
 	}
 
-	return shim.Success([]byte(sp))
+	return shim.Success(sp)
 }
 
 func stringInSlice(a string, list []string) bool {
@@ -292,7 +295,6 @@ func (t *IdentityChaincode) requestAccess(stub shim.ChaincodeStubInterface, args
 	}
 
 	var err error
-	var identity []byte
 
 	user, err := stub.GetState("user_" + args[0])
 
@@ -303,7 +305,7 @@ func (t *IdentityChaincode) requestAccess(stub shim.ChaincodeStubInterface, args
 		return shim.Error("An error occured")
 	}
 
-	identity, err = stub.GetCreator()
+	identity, err := stub.GetCreator()
 
 	if err != nil {
 		return shim.Error("An error occured")
@@ -336,7 +338,7 @@ func (t *IdentityChaincode) requestAccess(stub shim.ChaincodeStubInterface, args
 	block, _ := pem.Decode(userPublicKey)
 
 	if block == nil {
-    return shim.Error("ssh: no key found")
+    return shim.Error("An error occured")
   }
 
 	userPublicKeyObj, err := x509.ParsePKIXPublicKey(block.Bytes)
@@ -372,12 +374,11 @@ func (t *IdentityChaincode) requestAccess(stub shim.ChaincodeStubInterface, args
 	userStruct.Permissions = append(userStruct.Permissions, nodeId)
 	userJson, err := json.Marshal(userStruct)
 
-	err = stub.PutState("user_" + args[0], []byte(string(userJson)))
+	err = stub.PutState("user_" + args[0], userJson)
 
 	if err != nil {
 		return shim.Error("An error occured")
 	}
-
 
 	return shim.Success(nil)
 }
