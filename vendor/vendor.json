@@ -15,13 +15,6 @@
 			"revision": ""
 		},
 		{
-			"checksumSHA1": "gZQ6HheWahvZzIc3phBnOwoWHjE=",
-			"origin": "github.com/ethereum/go-ethereum/vendor/github.com/btcsuite/btcd/btcec",
-			"path": "github.com/btcsuite/btcd/btcec",
-			"revision": "78477e4118d7ab57b7f56847153251439f24e884",
-			"revisionTime": "2019-05-08T09:15:17Z"
-		},
-		{
 			"checksumSHA1": "6aGvzibOCGGTbCFKOHRWIASC+Us=",
 			"origin": "github.com/hyperledger/fabric/vendor/github.com/containerd/continuity/pathdriver",
 			"path": "github.com/containerd/continuity/pathdriver",
@@ -170,48 +163,6 @@
 			"origin": "github.com/hyperledger/fabric/vendor/github.com/docker/libnetwork/ipamutils",
 			"path": "github.com/docker/libnetwork/ipamutils",
 			"revision": ""
-		},
-		{
-			"checksumSHA1": "3NwSuAFohSveQYQl0HkjaQhg9ks=",
-			"path": "github.com/ethereum/go-ethereum",
-			"revision": "78477e4118d7ab57b7f56847153251439f24e884",
-			"revisionTime": "2019-05-08T09:15:17Z"
-		},
-		{
-			"checksumSHA1": "31g2Df8m5bWEOg3UE6YJVQpSlWY=",
-			"path": "github.com/ethereum/go-ethereum/common",
-			"revision": "78477e4118d7ab57b7f56847153251439f24e884",
-			"revisionTime": "2019-05-08T09:15:17Z"
-		},
-		{
-			"checksumSHA1": "tvdkin+xdCuyH0IPqxbrHYGL1gc=",
-			"path": "github.com/ethereum/go-ethereum/common/hexutil",
-			"revision": "78477e4118d7ab57b7f56847153251439f24e884",
-			"revisionTime": "2019-05-08T09:15:17Z"
-		},
-		{
-			"checksumSHA1": "BP3m/oEeoC9ustdCYzAVS/gabqg=",
-			"path": "github.com/ethereum/go-ethereum/common/math",
-			"revision": "78477e4118d7ab57b7f56847153251439f24e884",
-			"revisionTime": "2019-05-08T09:15:17Z"
-		},
-		{
-			"checksumSHA1": "PHB7umOzjEjzoTOd+8hHrR5zyN8=",
-			"path": "github.com/ethereum/go-ethereum/crypto",
-			"revision": "78477e4118d7ab57b7f56847153251439f24e884",
-			"revisionTime": "2019-05-08T09:15:17Z"
-		},
-		{
-			"checksumSHA1": "09V3eE1EhOkdfksyjsH+03c5fQg=",
-			"path": "github.com/ethereum/go-ethereum/crypto/secp256k1",
-			"revision": "78477e4118d7ab57b7f56847153251439f24e884",
-			"revisionTime": "2019-05-08T09:15:17Z"
-		},
-		{
-			"checksumSHA1": "X3WxB77ML6EjA5p0kZsLg2qR57M=",
-			"path": "github.com/ethereum/go-ethereum/rlp",
-			"revision": "78477e4118d7ab57b7f56847153251439f24e884",
-			"revisionTime": "2019-05-08T09:15:17Z"
 		},
 		{
 			"checksumSHA1": "4qm+Mid6llaR6TkEW2hj3yNTZSw=",
