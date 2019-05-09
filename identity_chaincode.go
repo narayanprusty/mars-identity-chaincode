@@ -7,11 +7,9 @@ import (
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/hyperledger/fabric/protos/msp"
 	"github.com/golang/protobuf/proto"
-	"crypto"
-  "crypto/rsa"
-  "crypto/x509"
-  "encoding/base64"
-	"encoding/pem"
+	"github.com/decred/dcrd/dcrec/secp256k1"
+	"encoding/hex"
+	"crypto/sha256"
 )
 
 type User struct {
@@ -80,7 +78,7 @@ func (t *IdentityChaincode) getCreatorIdentity(stub shim.ChaincodeStubInterface,
 	identity, err := stub.GetState("identityAuthority")
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	if identity == nil {
@@ -100,20 +98,20 @@ func (t *IdentityChaincode) issueIdentity(stub shim.ChaincodeStubInterface, args
 	identityAuthority, err := stub.GetState("identityAuthority")
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	identity, err := stub.GetCreator()
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	sId := &msp.SerializedIdentity{}
 	err = proto.Unmarshal(identity, sId)
 	
 	if err != nil {
-			return shim.Error("An error occured")
+			return shim.Error(err.Error())
 	}
 
 	nodeId := sId.Mspid
@@ -135,13 +133,13 @@ func (t *IdentityChaincode) issueIdentity(stub shim.ChaincodeStubInterface, args
 	newUserJson, err := json.Marshal(newUser)
 
 	if err != nil {
-			return shim.Error("An error occured")
+			return shim.Error(err.Error())
 	}
 
 	err = stub.PutState("user_" + args[0], newUserJson)
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	return shim.Success(nil)
@@ -155,7 +153,7 @@ func (t *IdentityChaincode) getIdentity(stub shim.ChaincodeStubInterface, args [
 	user, err := stub.GetState("user_" + args[0])
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	return shim.Success(user)
@@ -171,20 +169,20 @@ func (t *IdentityChaincode) updateUserMetadataHash(stub shim.ChaincodeStubInterf
 	identityAuthority, err := stub.GetState("identityAuthority")
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	identity, err := stub.GetCreator()
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	sId := &msp.SerializedIdentity{}
 	err = proto.Unmarshal(identity, sId)
 	
 	if err != nil {
-			return shim.Error("An error occured")
+			return shim.Error(err.Error())
 	}
 
 	nodeId := sId.Mspid
@@ -199,7 +197,7 @@ func (t *IdentityChaincode) updateUserMetadataHash(stub shim.ChaincodeStubInterf
 	err = json.Unmarshal(user, &userStruct)
 
 	if err != nil {
-			return shim.Error("An error occured")
+			return shim.Error(err.Error())
 	}
 
 	userStruct.MetadataHash = args[1]
@@ -209,7 +207,7 @@ func (t *IdentityChaincode) updateUserMetadataHash(stub shim.ChaincodeStubInterf
 	err = stub.PutState("user_" + args[0], userJson)
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	return shim.Success(nil)
@@ -225,20 +223,20 @@ func (t *IdentityChaincode) addServiceProvider(stub shim.ChaincodeStubInterface,
 	identityAuthority, err := stub.GetState("identityAuthority")
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	identity, err := stub.GetCreator()
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	sId := &msp.SerializedIdentity{}
 	err = proto.Unmarshal(identity, sId)
 	
 	if err != nil {
-			return shim.Error("An error occured")
+			return shim.Error(err.Error())
 	}
 
 	nodeId := sId.Mspid
@@ -254,13 +252,13 @@ func (t *IdentityChaincode) addServiceProvider(stub shim.ChaincodeStubInterface,
 	newSPJson, err := json.Marshal(newSP)
 
 	if err != nil {
-			return shim.Error("An error occured")
+			return shim.Error(err.Error())
 	}
 
 	err = stub.PutState("sp_" + args[0], newSPJson)
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	return shim.Success(nil)
@@ -274,7 +272,7 @@ func (t *IdentityChaincode) getServiceProvider(stub shim.ChaincodeStubInterface,
 	sp, err := stub.GetState("sp_" + args[0])
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	return shim.Success(sp)
@@ -298,86 +296,75 @@ func (t *IdentityChaincode) requestAccess(stub shim.ChaincodeStubInterface, args
 
 	user, err := stub.GetState("user_" + args[0])
 
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
 	var userStruct User
 	err = json.Unmarshal(user, &userStruct)
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	identity, err := stub.GetCreator()
 
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	sId := &msp.SerializedIdentity{}
 	err = proto.Unmarshal(identity, sId)
 	
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
 	nodeId := sId.Mspid
 
-	sp, err := stub.GetState("sp_" + nodeId)
-
+	pubKeyBytes, err := hex.DecodeString(userStruct.PublicKey)
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
-	var spStruct ServiceProvider
-	err = json.Unmarshal(sp, &spStruct)
-
+	pubKey, err := secp256k1.ParsePubKey(pubKeyBytes)
 	if err != nil {
-		return shim.Error("An error occured")
+		return shim.Error(err.Error())
 	}
 
-	userPublicKey, err := base64.StdEncoding.DecodeString(userStruct.PublicKey)
-
-	block, _ := pem.Decode(userPublicKey)
-
-	if block == nil {
-    return shim.Error("An error occured")
-  }
-
-	userPublicKeyObj, err := x509.ParsePKIXPublicKey(block.Bytes)
+	sigBytes, err := hex.DecodeString(args[1])
 
 	if err != nil {
-		fmt.Printf("%s", err)
-		return shim.Error("Public key invalid")
+		return shim.Error(err.Error())
 	}
 
-	signature, err := base64.StdEncoding.DecodeString(args[1])
-	
+	signature, err := secp256k1.ParseDERSignature(sigBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
 	message := []byte("{\"action\":\"grantAccess\",\"to\":\"" + nodeId + "\"}")
-
-	newhash := crypto.SHA256
-  pssh := newhash.New()
-  pssh.Write(message)
-	hashed := pssh.Sum(nil)
 	
-	rsaPublickey, _ := userPublicKeyObj.(*rsa.PublicKey)
+	messageHash := sha256.Sum256([]byte(message))
+	verified := signature.Verify(messageHash[:], pubKey)
 	
-	err = rsa.VerifyPKCS1v15(rsaPublickey, crypto.SHA256, hashed, signature)
+	if (verified) {
+		permissionAdded := stringInSlice(nodeId, userStruct.Permissions)
 
-	if err != nil {
+		if permissionAdded {
+			return shim.Error("Already have permission")
+		}
+
+		userStruct.Permissions = append(userStruct.Permissions, nodeId)
+		userJson, err := json.Marshal(userStruct)
+
+		err = stub.PutState("user_" + args[0], userJson)
+
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+	} else {
 		return shim.Error("Signature invalid")
-	}
-
-	permissionAdded := stringInSlice(nodeId, userStruct.Permissions)
-
-	if permissionAdded {
-		return shim.Error("Already have permission")
-	}
-
-	userStruct.Permissions = append(userStruct.Permissions, nodeId)
-	userJson, err := json.Marshal(userStruct)
-
-	err = stub.PutState("user_" + args[0], userJson)
-
-	if err != nil {
-		return shim.Error("An error occured")
 	}
 
 	return shim.Success(nil)
