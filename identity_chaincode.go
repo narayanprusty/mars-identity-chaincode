@@ -386,6 +386,6 @@ func (t *IdentityChaincode) requestAccess(stub shim.ChaincodeStubInterface, args
 func main() {
 	err := shim.Start(new(IdentityChaincode))
 	if err != nil {
-		fmt.Printf("Error starting Simple chaincode: %s", err)
+		fmt.Printf("Error starting chaincode: %s", err)
 	}
 }

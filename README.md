@@ -1,6 +1,6 @@
 # mars-identity-chaincode
 
-This chaincode is used to assign unique identity every person in mars. This chaincode will be deploy on the "identity" channel by the identity authority.
+This chaincode is used to assign unique identity every person in mars. This chaincode will be deployed on the "identity" channel by the identity authority.
 
 ## Install and Instantiate 
 
