@@ -3,13 +3,15 @@ package main
 import (
 	"fmt"
 	"encoding/json"
-	"encoding/hex"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/hyperledger/fabric/protos/msp"
 	"github.com/golang/protobuf/proto"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/common/hexutil"
+	"crypto"
+  "crypto/rsa"
+  "crypto/x509"
+  "encoding/base64"
+	"encoding/pem"
 )
 
 type User struct {
@@ -286,6 +288,16 @@ func (t *IdentityChaincode) trimLeftChars(s string, n int) string {
 	return s[:0]
 }
 
+type rsaPublicKey struct {
+  *rsa.PublicKey
+}
+
+type Unsigner interface {
+  // Sign returns raw signature for the given data. This method
+  // will apply the hash specified for the keytype to the data.
+  Unsign(data []byte, sig []byte) error
+}
+
 func (t *IdentityChaincode) requestAccess(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments.")
@@ -331,25 +343,38 @@ func (t *IdentityChaincode) requestAccess(stub shim.ChaincodeStubInterface, args
 		return shim.Error("An error occured")
 	}
 
-	publicKeyBytes, err := hex.DecodeString(userStruct.PublicKey)
+	userPublicKey, err := base64.StdEncoding.DecodeString(userStruct.PublicKey)
+
+	block, _ := pem.Decode(userPublicKey)
+
+	if block == nil {
+    return shim.Error("ssh: no key found")
+  }
+
+	userPublicKeyObj, err := x509.ParsePKIXPublicKey(block.Bytes)
 
 	if err != nil {
-		return shim.Error("An error occured")
+		fmt.Printf("%s", err)
+		return shim.Error("Public key invalid")
 	}
 
-	data := []byte("{\"action\":\"grantAccess\",\"to\":\"" + nodeId + "\"}")
-	hash := crypto.Keccak256Hash(data)
-	signature := hexutil.MustDecode(args[1])
-	sigPublicKey, err := crypto.Ecrecover(hash.Bytes(), signature)
+	signature, err := base64.StdEncoding.DecodeString(args[1])
+	
+	message := []byte("{\"action\":\"grantAccess\",\"to\":\"" + nodeId + "\"}")
+
+	newhash := crypto.SHA256
+  pssh := newhash.New()
+  pssh.Write(message)
+	hashed := pssh.Sum(nil)
+	
+	rsaPublickey, _ := userPublicKeyObj.(*rsa.PublicKey)
+	
+	err = rsa.VerifyPKCS1v15(rsaPublickey, crypto.SHA256, hashed, signature)
 
 	if err != nil {
-		return shim.Error("Failed to generate public key")
-	}
-
-	if hex.EncodeToString(publicKeyBytes) != t.trimLeftChars(hex.EncodeToString(sigPublicKey), 2){
 		return shim.Error("Signature invalid")
-	} 
-
+	}
+	
 	return shim.Success(nil)
 }
 
