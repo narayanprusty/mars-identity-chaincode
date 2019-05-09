@@ -277,27 +277,6 @@ func (t *IdentityChaincode) getServiceProvider(stub shim.ChaincodeStubInterface,
 	return shim.Success([]byte(sp))
 }
 
-func (t *IdentityChaincode) trimLeftChars(s string, n int) string {
-	m := 0
-	for i := range s {
-		if m >= n {
-			return s[i:]
-		}
-		m++
-	}
-	return s[:0]
-}
-
-type rsaPublicKey struct {
-  *rsa.PublicKey
-}
-
-type Unsigner interface {
-  // Sign returns raw signature for the given data. This method
-  // will apply the hash specified for the keytype to the data.
-  Unsign(data []byte, sig []byte) error
-}
-
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
 			if b == a {
