@@ -298,6 +298,15 @@ type Unsigner interface {
   Unsign(data []byte, sig []byte) error
 }
 
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+			if b == a {
+					return true
+			}
+	}
+	return false
+}
+
 func (t *IdentityChaincode) requestAccess(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments.")
@@ -374,7 +383,23 @@ func (t *IdentityChaincode) requestAccess(stub shim.ChaincodeStubInterface, args
 	if err != nil {
 		return shim.Error("Signature invalid")
 	}
-	
+
+	permissionAdded := stringInSlice(nodeId, userStruct.Permissions)
+
+	if permissionAdded {
+		return shim.Error("Already have permission")
+	}
+
+	userStruct.Permissions = append(userStruct.Permissions, nodeId)
+	userJson, err := json.Marshal(userStruct)
+
+	err = stub.PutState("user_" + args[0], []byte(string(userJson)))
+
+	if err != nil {
+		return shim.Error("An error occured")
+	}
+
+
 	return shim.Success(nil)
 }
 
