@@ -10,5 +10,5 @@ Then follow this steps to install and instantiate the chaincode:
 
 1. We need to install the chaincode in all three authorities containers. For all authorities, clone the chaincode repo using the command `cd /opt/gopath/src/github.com && git clone https://github.com/narayanprusty/mars-identity-chaincode.git`
 2. Then for all authorities install using this command: `peer chaincode install -n identity -v v1.0 -p github.com/mars-identity-chaincode`
-3. Then in identity authority container run the following command to instantiate the chaincode: `peer chaincode instantiate -n identity -v 1.0 -c '{"Args":[]}' -C identity`
+3. Then in identity authority container run the following command to instantiate the chaincode: `peer chaincode instantiate -n identity -v 1.0 -c '{"Args":[]}' -C identity --cafile /home/managedblockchain-tls-chain.pem --tls`
 
