@@ -364,7 +364,7 @@ func (t *IdentityChaincode) requestAccess(stub shim.ChaincodeStubInterface, args
 			return shim.Error(err.Error())
 		}
 	} else {
-		return shim.Error("Signature invalid")
+		return shim.Error("Invalid signature")
 	}
 
 	return shim.Success(nil)
